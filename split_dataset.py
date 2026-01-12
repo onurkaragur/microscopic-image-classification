@@ -17,3 +17,6 @@ SELECTED_CLASSES = [
 SEED = 42
 SPLIT = (0.70, 0.20, 0.10) # Train, Val, Test
 IMG_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"}
+
+def is_image(p: Path) -> bool:
+    return p.suffix.lower() in IMG_EXTS
