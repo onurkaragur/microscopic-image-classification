@@ -28,3 +28,8 @@ def reset_data_folders():
     (OUT_DIR / "train").mkdir(parents=True, exist_ok=True)
     (OUT_DIR / "val").mkdir(parents=True, exist_ok=True)
     (OUT_DIR / "test").mkdir(parents=True, exist_ok=True)
+
+def copy_files(files: list[Path], dst_dir: Path):
+    dst_dir.mkdir(parents=True, exist_ok=True)
+    for f in files: 
+        shutil.copy(f, dst_dir / f.name)
