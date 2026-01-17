@@ -25,4 +25,12 @@ def check_and_remove(root: Path):
                     print(f"Couldn't delete {p} \n Error: {e}")
     print("Finished. Controlled Total {total}, Deleted {removed}.")
 
-    
+def main():
+    for split in ["train","val","test"]:
+        root = DATA_DIR / split
+        if root.exists():
+            print("Control: ", root)
+            check_and_remove(root)
+
+if __name__ == "__main__":
+    main()
