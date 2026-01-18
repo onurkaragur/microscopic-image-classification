@@ -27,7 +27,7 @@ def main():
     os.makedirs("models", exist_ok=True)
 
     train_tfms = transforms.Compose([
-        transforms.Resize(cfg.img_size, cfg.img_size),
+        transforms.Resize((cfg.img_size, cfg.img_size)),
         transforms.RandomHorizontalFlip(p=0.5),
         transforms.RandomRotation(10),
         transforms.ToTensor(),
@@ -64,4 +64,56 @@ def main():
     optimizer = torch.optim.AdamW(model.parameters(), lr=cfg.lr)
 
     best_val_acc = 0.0
-    
+
+    for epoch in range(1, cfg.epochs + 1):
+        # Training
+        model.train()
+        train_correct, train_total, train_loss_sum = 0, 0, 0.0
+
+        for x, y in tqdm(train_loader, desc=f"Epoch {epoch}/{cfg.epochs} [train]"):
+            x, y = x.to(device), y.to(device)
+            optimizer.zero_grad()
+            logits = model(x)
+            loss = criterion(logits, y)
+            loss.backward()
+            optimizer.step()
+
+            train_loss_sum += loss.item() * x.size(0)
+            preds = logits.argmax(dim=1)
+            train_correct += (preds == y).sum().item()
+            train_total += x.size(0)
+
+        train_loss = train_loss_sum / max(train_total, 1)
+        train_acc = train_correct / max(train_total, 1)
+
+        # Validation
+        model.eval()
+        val_correct, val_total = 0, 0
+        with torch.no_grad():
+            for x, y in tqdm(val_loader, desc=f"Epoch {epoch}/{cfg.epochs} [val]"):
+                x, y = x.to(device), y.to(device)
+                logits = model(x)
+                preds = logits.argmax(dim=1)
+                val_correct += (preds == y).sum().item()
+                val_total += x.size(0)
+
+        val_acc = val_correct / max(val_total, 1)
+
+        print(f"\nEpoch {epoch}: train_loss={train_loss:.4f} train_acc={train_acc:.3f} val_acc={val_acc:.3f}\n")
+
+        # Save the best model
+        if val_acc > best_val_acc:
+            best_val_acc = val_acc
+            ckpt = {
+                "model_state": model.state_dict(),
+                "classes": train_ds.classes,
+                "img_size": cfg.img_size,
+            }
+            ckpt_path = os.path.join(cfg.out_path, "best_model.pth")
+            torch.save(ckpt, ckpt_path)
+            print(f"Saved best model -> {ckpt_path} (val_acc={best_val_acc:.3f})")
+
+        print(f"Done. Best val_acc: {best_val_acc}")
+
+if __name__ == "__main__":
+    main()
