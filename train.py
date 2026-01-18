@@ -41,3 +41,27 @@ def main():
         transforms.Normalize(mean=[0.485, 0.456, 0.406],
                              std=[0.229, 0.224, 0.225]),
     ])
+
+    train_ds = datasets.ImageFolder(cfg.train_dir, transform=train_tfms)
+    val_ds = datasets.ImageFolder(cfg.val_dir, transform=val_tfms)
+
+    num_classes = len(train_ds.classes)
+    print("Classes: ", train_ds.classes)
+    assert num_classes == 8, f"Found 8 classes as expected: {num_classes}"
+
+    train_loader = DataLoader(train_ds, batch_size=cfg.batch_size, shuffle=True, num_workers=cfg.num_workers)
+    val_loader = DataLoader(val_ds, batch_size=cfg.batch_size, shuffle=False, num_workers=cfg.num_workers) 
+
+    device = get_device()
+    print("Device: ", device)
+
+    # Transfer Learning
+    model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
+    model.fc = nn.Linear(model.fc.in_features, num_classes)
+    model = model.to(device)
+
+    criterion = nn.CrossEntropyLoss()
+    optimizer = torch.optim.AdamW(model.parameters(), lr=cfg.lr)
+
+    best_val_acc = 0.0
+    
