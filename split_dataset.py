@@ -7,14 +7,11 @@ RAW_DIR = DATA_DIR / "raw"
 OUT_DIR = DATA_DIR / "processed"
 
 SELECTED_CLASSES = [
-    "Amoeba",
-    "Euglena",
-    "Hydra",
-    "Paramecium",
-    "Rod_bacteria",
-    "Spherical_bacteria",
-    "Spiral_bacteria",
-    "Yeast"
+    "Actinomyces.israeli",
+    "Bacteroides.fragilis",
+    "Clostridium.perfringens",
+    "Escherichia.coli",
+    "Listeria.monocytogenes"
 ]
 
 SEED = 42
