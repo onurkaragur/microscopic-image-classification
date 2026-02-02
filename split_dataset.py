@@ -19,9 +19,11 @@ SPLIT = (0.70, 0.20, 0.10) # Train, Val, Test
 IMG_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"}
 
 def is_image(p: Path) -> bool:
+    # Ensures image's extension is in IMG_EXTS
     return p.suffix.lower() in IMG_EXTS
 
 def reset_data_folders():
+    # Fully cleans OUT_DIR
     if OUT_DIR.exists():
         shutil.rmtree(OUT_DIR)
 
@@ -30,12 +32,13 @@ def reset_data_folders():
     (OUT_DIR / "test").mkdir(parents=True, exist_ok=True)
 
 def copy_files(files: list[Path], dst_dir: Path):
+    # Copies files to the destination directory
     dst_dir.mkdir(parents=True, exist_ok=True)
     for f in files: 
         shutil.copy(f, dst_dir / f.name)
 
 def main():
-
+    # For consistently producing same numbers every time
     random.seed(SEED)
 
     # Checks if selected classes exist
