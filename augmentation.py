@@ -33,3 +33,13 @@ def random_affine_crop_size(img: Image.Image, scale=(0.9, 1.0)):
         cropped = img.crop(left, top, left + new_w, top + new_h)
         return cropped.resize((w,h), resample=Image.BILINEAR)
     
+def adjust_brightness_contrast(img: Image.Image, brightness=(0.8, 1.2), contrast=(0.8,1.2), p=0.8):
+    # Randomly changes lighting conditions
+    if random.random() < p:
+        b = random.uniform(brightness[0], brightness[1])
+        img = ImageEnhance.Brightness(img).enhance(b)
+    if random.random() < p:
+        c = random.uniform(contrast[0], contrast[1])
+        img = ImageEnhance.Contrast(img).enhance(c)
+    return img
+
