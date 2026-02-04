@@ -14,3 +14,22 @@ def random_flip(img: Image.Image):
     else:
         return img.transpose(Image.FLIP_TOP_BOTTOM)
     
+def random_rotate(img: Image.Image, max_angle=30):
+    # Randomly rotates the image between -max_angle and +max_angle
+    if random.random() < 0.5:
+        angle = random.uniform(-max_angle, max_angle)
+        return img.rotate(angle, resample=Image.BILINEAR, expand=False)
+    return img
+
+def random_affine_crop_size(img: Image.Image, scale=(0.9, 1.0)):
+    # Random zoom-in crop + resize back to original size
+    if random.random() < 0.5:
+        w, h = img.size
+        scale_factor = random.uniform(scale[0], scale[1])
+        new_w = int(w * scale_factor)
+        new_h = int(h * scale_factor)
+        left = random.randint(0, max(0, w - new_w))
+        top = random.randint(0, max(0, h - new_h))
+        cropped = img.crop(left, top, left + new_w, top + new_h)
+        return cropped.resize((w,h), resample=Image.BILINEAR)
+    
