@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 @dataclass
 class Config:
-    train_dir: str = "data/processed/train"
+    train_dir: str = "data/augmented"
     val_dir: str = "data/processed/val"
     out_path: str = "models"
     img_size: int = 224
@@ -47,7 +47,9 @@ def main():
 
     num_classes = len(train_ds.classes)
     print("Classes: ", train_ds.classes)
-    assert num_classes == 8, f"Found 8 classes as expected: {num_classes}"
+    print(f"Training samples: {len(train_ds)}")
+    print(f"Validation samples: {len(val_ds)}")
+    assert num_classes == 5, f"Expected 5 classes, found {num_classes}"
 
     train_loader = DataLoader(train_ds, batch_size=cfg.batch_size, shuffle=True, num_workers=cfg.num_workers)
     val_loader = DataLoader(val_ds, batch_size=cfg.batch_size, shuffle=False, num_workers=cfg.num_workers) 
@@ -66,11 +68,16 @@ def main():
     best_val_acc = 0.0
 
     for epoch in range(1, cfg.epochs + 1):
+        print(f"\n{'='*50}")
+        print(f"Starting Epoch {epoch}/{cfg.epochs}")
+        print(f"{'='*50}")
+        
         # Training
         model.train()
         train_correct, train_total, train_loss_sum = 0, 0, 0.0
-
-        for x, y in tqdm(train_loader, desc=f"Epoch {epoch}/{cfg.epochs} [train]"):
+        num_batches = len(train_loader)
+        
+        for batch_idx, (x, y) in enumerate(tqdm(train_loader, desc=f"Epoch {epoch}/{cfg.epochs} [train]")):
             x, y = x.to(device), y.to(device)
             optimizer.zero_grad()
             logits = model(x)
@@ -82,11 +89,18 @@ def main():
             preds = logits.argmax(dim=1)
             train_correct += (preds == y).sum().item()
             train_total += x.size(0)
+            
+            # Print progress every 10 batches
+            if (batch_idx + 1) % 10 == 0 or batch_idx == num_batches - 1:
+                current_loss = train_loss_sum / max(train_total, 1)
+                current_acc = train_correct / max(train_total, 1)
+                print(f"  Batch {batch_idx+1}/{num_batches}: loss={current_loss:.4f}, acc={current_acc:.3f}")
 
         train_loss = train_loss_sum / max(train_total, 1)
         train_acc = train_correct / max(train_total, 1)
 
         # Validation
+        print(f"\nRunning validation...")
         model.eval()
         val_correct, val_total = 0, 0
         with torch.no_grad():
@@ -99,7 +113,12 @@ def main():
 
         val_acc = val_correct / max(val_total, 1)
 
-        print(f"\nEpoch {epoch}: train_loss={train_loss:.4f} train_acc={train_acc:.3f} val_acc={val_acc:.3f}\n")
+        print(f"\n{'='*50}")
+        print(f"EPOCH {epoch} RESULTS:")
+        print(f"  Training Loss: {train_loss:.4f}")
+        print(f"  Training Accuracy: {train_acc:.3f}")
+        print(f"  Validation Accuracy: {val_acc:.3f}")
+        print(f"{'='*50}\n")
 
         # Save the best model
         if val_acc > best_val_acc:
@@ -111,9 +130,13 @@ def main():
             }
             ckpt_path = os.path.join(cfg.out_path, "best_model.pth")
             torch.save(ckpt, ckpt_path)
-            print(f"Saved best model -> {ckpt_path} (val_acc={best_val_acc:.3f})")
+            print(f"💾 Saved new best model -> {ckpt_path} (val_acc={best_val_acc:.3f})")
 
-        print(f"Done. Best val_acc: {best_val_acc}")
+    print(f"\n{'='*60}")
+    print(f"TRAINING COMPLETE!")
+    print(f"Best Validation Accuracy: {best_val_acc:.3f}")
+    print(f"Model saved at: models/best_model.pth")
+    print(f"{'='*60}")
 
 if __name__ == "__main__":
     main()
